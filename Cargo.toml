@@ -1,0 +1,8 @@
+[package]
+authors = ["Colin Reeder <vpzomtrrfrt@gmail.com>"]
+name = "cookieserve"
+version = "0.1.0"
+
+[dependencies]
+futures = "0.1.17"
+hyper = "0.11.14"
