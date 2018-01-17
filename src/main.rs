@@ -20,6 +20,7 @@ impl<'a> hyper::server::Service for CookieService<'a> {
         let resp = rand::thread_rng().choose(self.fortunes).unwrap().to_owned();
         Box::new(futures::future::ok(Self::Response::new()
                                      .with_header(hyper::header::ContentLength(resp.len() as u64))
+                                     .with_header(hyper::header::ContentType::plaintext())
                                      .with_body(resp)))
     }
 }
