@@ -1,6 +1,7 @@
 extern crate futures;
 extern crate hyper;
 extern crate rand;
+extern crate htmlescape;
 
 use futures::future::Future;
 
@@ -16,12 +17,32 @@ impl<'a> hyper::server::Service for CookieService<'a> {
     type Error = hyper::Error;
     type Future = Box<Future<Item=Self::Response,Error=Self::Error>>;
 
-    fn call(&self, _req: Self::Request) -> Self::Future {
-        let resp = rand::thread_rng().choose(self.fortunes).unwrap().to_owned();
-        Box::new(futures::future::ok(Self::Response::new()
-                                     .with_header(hyper::header::ContentLength(resp.len() as u64))
-                                     .with_header(hyper::header::ContentType::plaintext())
-                                     .with_body(resp)))
+    fn call(&self, req: Self::Request) -> Self::Future {
+        let fortune = rand::thread_rng().choose(self.fortunes).unwrap().to_owned();
+        if req.uri().path() == "/html" {
+            let resp = format!("<!DOCTYPE html>
+            <html>
+            <head>
+            <meta property=\"og:title\" content=\"Forune\" />
+            <meta property=\"og:type\" content=\"website\" />
+            <meta property=\"og:description\" content=\"{}\" />
+            </head>
+            <body>
+            <pre>{}</pre>
+            </body>
+            </html>", htmlescape::encode_minimal(&fortune), fortune);
+            Box::new(futures::future::ok(Self::Response::new()
+                                         .with_header(hyper::header::ContentLength(resp.len() as u64))
+                                         .with_header(hyper::header::ContentType::html())
+                                         .with_body(resp)))
+        }
+        else {
+            let resp = fortune;
+            Box::new(futures::future::ok(Self::Response::new()
+                                         .with_header(hyper::header::ContentLength(resp.len() as u64))
+                                         .with_header(hyper::header::ContentType::plaintext())
+                                         .with_body(resp)))
+        }
     }
 }
 
